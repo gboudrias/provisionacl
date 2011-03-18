@@ -9,8 +9,6 @@
  */
 function drush_provisionacl_post_provision_install($url = null) {
   if (d()->type == 'site') {
-    $drushrc = new provisionConfig_drushrc_site(d()->name);
-    $settings = new provisionConfig_drupal_settings(d()->name);
-    provisionacl_set_acl('group', d()->client_name, 'r--', array($drushrc->filename(), $settings->filename()), TRUE);
+    provisionacl_fix_settings();
   }
 }
