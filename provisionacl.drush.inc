@@ -53,15 +53,14 @@ function provisionacl_set_acl($type, $id, $mode, $files, $flush = FALSE, $flags 
  * @see provision_posix_groupname()
  * @see provisionacl_fix_settings()
  * @see provisionacl_fix_dirs()
- * @return bool if the ACL settings succeeded
  */
 function provisionacl_site_acls() {
   $group = d()->client_name;
   if (!provision_posix_groupname($group)) {
     drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
-    return false;
+  } elseif (!(provisionacl_fix_settings($group, d()->name) && provisionacl_fix_dirs($group, d()->site_path))) {
+    drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => drush_shell_exec_output())));
   }
-  return provisionacl_fix_settings($group, d()->name) && provisionacl_fix_dirs($group, d()->site_path);
 }
 
 /**
@@ -120,8 +119,6 @@ function provisionacl_drush_exit() {
   $command = explode(" ", $command['command']);
 
   if (preg_match("/^provision-(verify|install)$/", $command[0]) && drush_get_option('provision_save_config', TRUE)) {
-    if (!provisionacl_site_acls()) {
-      drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => drush_shell_exec_output())));
-    }
+    provisionacl_site_acls();
   }
 }
