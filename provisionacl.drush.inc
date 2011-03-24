@@ -70,6 +70,17 @@ function provisionacl_site_acls() {
  * libraries, files and private directories so that members of a group
  * can read and write them.
  *
+ * We create 3 ACLs here for all those directories:
+ *
+ * 1. a default ACL for the aegir user - to make sure that it has
+ * access to files created by users under the directories
+ *
+ * 2. a default ACL for the client group - to make sure it has access
+ * to files created under the directories
+ *
+ * 3. a regular ACL for the client group - to make sure it has access
+ * to the directory itself
+ *
  * @param $group string the group to give the rights to
  * @param $site_path string the base path of the site
  * (e.g. /var/www/drupal-6.20/sites/default/)
@@ -81,7 +92,16 @@ function provisionacl_site_acls() {
 function provisionacl_fix_dirs($group, $site_path) {
   $dirs = array('modules', 'themes', 'libraries', 'files', 'private');
   drush_log(dt('setting group ACL read/write access to @group on @dirs', array('@group' => $group, '@dirs' => join(',', $dirs))));
-  return provisionacl_set_acl('group', $group, 'rw-', $dirs, TRUE);
+  foreach ($dirs as &$dir) {
+    $dir = $site_path . '/' . $dir;
+  }
+  // a default ACL for the aegir user
+  $result = provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs, TRUE);
+  // a default ACL for the client group
+  $result = $result && provisionacl_set_acl('d:g', $group, 'rwx', $dirs, TRUE);
+  // a regular ACL for the client group
+  $result = $result && provisionacl_set_acl('g', $group, 'rwx', $dirs);
+  return $result;
 }
 
 /**
