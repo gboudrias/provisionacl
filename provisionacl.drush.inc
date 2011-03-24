@@ -139,6 +139,8 @@ function provisionacl_drush_exit() {
   $command = explode(" ", $command['command']);
 
   if (preg_match("/^provision-(verify|install)$/", $command[0])) {
-    provisionacl_site_acls();
+    if (d()->context_type == 'site') {
+      provisionacl_site_acls();
+    }
   }
 }
