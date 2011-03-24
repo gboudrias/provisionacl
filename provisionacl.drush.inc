@@ -138,7 +138,7 @@ function provisionacl_drush_exit() {
   $command = drush_get_command();
   $command = explode(" ", $command['command']);
 
-  if (preg_match("/^provision-(verify|install)$/", $command[0]) && drush_get_option('provision_save_config', TRUE)) {
+  if (preg_match("/^provision-(verify|install)$/", $command[0])) {
     provisionacl_site_acls();
   }
 }
