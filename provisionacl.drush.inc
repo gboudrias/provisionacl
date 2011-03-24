@@ -49,10 +49,19 @@ function provisionacl_set_acl($type, $id, $mode, $files, $flush = FALSE, $flags 
  * This operates on the current context, which should normally be a
  * site, and will fetch the client_name and file paths from the context.
  *
+ * @return bool if the ACL was set properly. this can fail for two
+ * reasons: the group doesn't exist or setfacl failed.
+ *
  * @see d()
+ * @see provision_posix_groupname()
+ * @see provision_set_acl()
  */
 function provisionacl_fix_settings() {
   $group = d()->client_name;
+  if (!provision_posix_groupname($group)) {
+    drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
+    return false;
+  }
   $context = d()->name;
   drush_log(dt('setting group ACL read access to @group on drushrc.php and settings.php files', array('@group' => $group)));
   $drushrc = new provisionConfig_drushrc_site($context);
