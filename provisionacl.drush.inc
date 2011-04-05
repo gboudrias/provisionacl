@@ -58,8 +58,33 @@ function provisionacl_site_acls() {
   $group = d()->client_name;
   if (!provision_posix_groupname($group)) {
     drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
-  } elseif (!(provisionacl_fix_settings($group, d()->name) && provisionacl_fix_dirs($group, d()->site_path))) {
+  } elseif (!(provisionacl_fix_settings($group, d()->name) && provisionacl_fix_dirs($group, d()->site_path) && provision_acl_fix_clientdir($group))) {
     drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => drush_shell_exec_output())));
+  }
+}
+
+/**
+ * Fix ACLs on client directories
+ *
+ * Starting with 1.0-rc4, Aegir creates symlinks in the "clients_path"
+ * (usually ~/clients/<clientname>) directory. Since this is made to
+ * be accessible by user, we also give our group read/execute access
+ * to that directory so they can see their sites.
+ *
+ * @arg $group string
+ *   the group name, also assumed to be the path to the subdirectory
+ *   in the clients directory
+ *
+ * @return bool if the ACL was sucessful, or TRUE if the clients
+ *   directory doesn't exist (for backward compatibility)
+ */
+function provision_acl_fix_clientdir($group) {
+  $sites_dir = d()->server->clients_path . '/' . $group;
+  if (file_exists($sites_dir)) {
+    return provisionacl_set_acl('group', $group, 'r-x', array($sites_dir), TRUE);
+  } else {
+    drush_log(dt('not setting ACLs on non-existent client directory @path', array('@path' => $sites_dir)), 'warning');
+    return TRUE;
   }
 }
 
