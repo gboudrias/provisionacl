@@ -182,13 +182,13 @@ function provisionacl_drush_exit() {
 /**
  * Implementation of hook_drush_pm_post_download().
  *
- * This runs after the user downloads a new module, and makes sure the
- * ACLs are set properly, as tar and cp do not respect ACLs and will
- * break because of the mask.
+ * This runs after the user downloads a new module, and makes sure the ACLs are
+ * set properly, as tar and cp do not respect ACLs and will set an erroneous
+ * mask that will override the ACLs.
+ *
+ * This function resets that mask to rwx.
  */
 function provisionacl_drush_pm_post_download($request, $release) {
-  $group = d()->client_name;
-  if ($group) {
-    return provisionacl_directory_acl($group, $request['project_install_location']);
-  }
+  drush_log(dt("reseting ACL mask after expansion"));
+  return provisionacl_set_acl('mask', '', 'rwx', array($request['project_install_location']), FALSE, array('-R'));
 }
