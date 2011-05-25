@@ -89,13 +89,25 @@ function provision_acl_fix_clientdir($group) {
 }
 
 /**
- * Configure ACLs on site's directories
+ * Set ACL permissions on common site directories
  *
- * This gives additionnal privileges to the modules, themes,
- * libraries, files and private directories so that members of a group
- * can read and write them.
+ * Wrapper for provisionacl_directory_acl()
+ */
+function provisionacl_fix_dirs($group, $site_path) {
+  $dirs = array('modules', 'themes', 'libraries', 'files', 'private');
+  foreach ($dirs as &$dir) {
+    $dir = $site_path . '/' . $dir;
+  }
+  return provisionacl_directory_acl($dirs);
+}
+
+/**
+ * Configure ACLs on directories
  *
- * We create 3 ACLs here for all those directories:
+ * This gives additionnal privileges on directories so that members of
+ * a group can read and write them.
+ *
+ * We create 3 ACLs here:
  *
  * 1. a default ACL for the aegir user - to make sure that it has
  * access to files created by users under the directories
@@ -107,19 +119,15 @@ function provision_acl_fix_clientdir($group) {
  * to the directory itself
  *
  * @param $group string the group to give the rights to
- * @param $site_path string the base path of the site
- * (e.g. /var/www/drupal-6.20/sites/default/)
+ * @param $dirs string an array of directories to recursively change
+ * permissions on
  * 
  * @return bool if the ACL was set properly
  * 
  * @see provisionacl_set_acl()
  */
-function provisionacl_fix_dirs($group, $site_path) {
-  $dirs = array('modules', 'themes', 'libraries', 'files', 'private');
+function provisionacl_directory_acl($group, $dirs) {
   drush_log(dt('setting group ACL read/write access to @group on @dirs', array('@group' => $group, '@dirs' => join(',', $dirs))));
-  foreach ($dirs as &$dir) {
-    $dir = $site_path . '/' . $dir;
-  }
   // a default ACL for the aegir user
   $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE, array('-R'));
   $result = $result && provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs, FALSE, array('-R'));
@@ -168,5 +176,19 @@ function provisionacl_drush_exit() {
     if (d()->context_type == 'site') {
       provisionacl_site_acls();
     }
+  }
+}
+
+/**
+ * Implementation of hook_drush_pm_post_download().
+ *
+ * This runs after the user downloads a new module, and makes sure the
+ * ACLs are set properly, as tar and cp do not respect ACLs and will
+ * break because of the mask.
+ */
+function provisionacl_drush_pm_post_download($request, $release) {
+  $group = d()->client_name;
+  if ($group) {
+    return provisionacl_directory_acl($group, $request['project_install_location']);
   }
 }
