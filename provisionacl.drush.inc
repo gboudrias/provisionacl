@@ -62,7 +62,7 @@ function provisionacl_site_acls() {
   }
   if (!provision_posix_groupname($group)) {
     drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
-  } elseif (!(provisionacl_fix_settings($group, d()->name) && provisionacl_fix_dirs($group, $dirs) && provision_acl_fix_clientdir($group))) {
+  } elseif (!(provisionacl_settings_acls($group, d()->name) && provisionacl_directories_acls($group, $dirs) && provisionacl_clientdir_acls($group))) {
     drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => drush_shell_exec_output())));
   }
 }
@@ -82,7 +82,7 @@ function provisionacl_site_acls() {
  * @return bool if the ACL was sucessful, or TRUE if the clients
  *   directory doesn't exist (for backward compatibility)
  */
-function provision_acl_fix_clientdir($group) {
+function provisionacl_clientdir_acls($group) {
   $sites_dir = d()->server->clients_path . '/' . $group;
   if (file_exists($sites_dir)) {
     return provisionacl_set_acl('group', $group, 'r-x', array($sites_dir), TRUE);
@@ -117,7 +117,7 @@ function provision_acl_fix_clientdir($group) {
  * 
  * @see provisionacl_set_acl()
  */
-function provisionacl_directory_acl($group, $dirs) {
+function provisionacl_directories_acls($group, $dirs) {
   drush_log(dt('setting group ACL read/write access to @group on @dirs', array('@group' => $group, '@dirs' => join(',', $dirs))));
   // a default ACL for the aegir user
   $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE, array('-R'));
@@ -145,7 +145,7 @@ function provisionacl_directory_acl($group, $dirs) {
  * @see d()
  * @see provision_set_acl()
  */
-function provisionacl_fix_settings($group, $context) {
+function provisionacl_settings_acls($group, $context) {
   drush_log(dt('setting group ACL read access to @group on drushrc.php and settings.php files', array('@group' => $group)));
   $drushrc = new provisionConfig_drushrc_site($context);
   $settings = new provisionConfig_drupal_settings($context);
