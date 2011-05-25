@@ -56,9 +56,13 @@ function provisionacl_set_acl($type, $id, $mode, $files, $flush = FALSE, $flags 
  */
 function provisionacl_site_acls() {
   $group = d()->client_name;
+  $dirs = array('modules', 'themes', 'libraries', 'files', 'private');
+  foreach ($dirs as &$dir) {
+    $dir = d()->site_path . '/' . $dir;
+  }
   if (!provision_posix_groupname($group)) {
     drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
-  } elseif (!(provisionacl_fix_settings($group, d()->name) && provisionacl_fix_dirs($group, d()->site_path) && provision_acl_fix_clientdir($group))) {
+  } elseif (!(provisionacl_fix_settings($group, d()->name) && provisionacl_fix_dirs($group, $dirs) && provision_acl_fix_clientdir($group))) {
     drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => drush_shell_exec_output())));
   }
 }
@@ -86,19 +90,6 @@ function provision_acl_fix_clientdir($group) {
     drush_log(dt('not setting ACLs on non-existent client directory @path', array('@path' => $sites_dir)), 'warning');
     return TRUE;
   }
-}
-
-/**
- * Set ACL permissions on common site directories
- *
- * Wrapper for provisionacl_directory_acl()
- */
-function provisionacl_fix_dirs($group, $site_path) {
-  $dirs = array('modules', 'themes', 'libraries', 'files', 'private');
-  foreach ($dirs as &$dir) {
-    $dir = $site_path . '/' . $dir;
-  }
-  return provisionacl_directory_acl($dirs);
 }
 
 /**
