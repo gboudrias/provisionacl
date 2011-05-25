@@ -121,7 +121,8 @@ function provisionacl_fix_dirs($group, $site_path) {
     $dir = $site_path . '/' . $dir;
   }
   // a default ACL for the aegir user
-  $result = provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs, TRUE);
+  $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE);
+  $result = $result && provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs);
   // a default ACL for the client group
   $result = $result && provisionacl_set_acl('d:g', $group, 'rwx', $dirs, TRUE);
   // a regular ACL for the client group
