@@ -121,12 +121,12 @@ function provisionacl_fix_dirs($group, $site_path) {
     $dir = $site_path . '/' . $dir;
   }
   // a default ACL for the aegir user
-  $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE);
-  $result = $result && provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs);
+  $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE, array('-R'));
+  $result = $result && provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs, FALSE, array('-R'));
   // a default ACL for the client group
-  $result = $result && provisionacl_set_acl('d:g', $group, 'rwx', $dirs);
+  $result = $result && provisionacl_set_acl('d:g', $group, 'rwx', $dirs, FALSE, array('-R'));
   // a regular ACL for the client group
-  $result = $result && provisionacl_set_acl('g', $group, 'rwx', $dirs);
+  $result = $result && provisionacl_set_acl('g', $group, 'rwx', $dirs, FALSE, array('-R'));
   return $result;
 }
 
