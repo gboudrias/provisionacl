@@ -126,6 +126,12 @@ function provisionacl_directories_acls($group, $dirs) {
   $result = $result && provisionacl_set_acl('d:g', $group, 'rwx', $dirs, FALSE, array('-R'));
   // a regular ACL for the client group
   $result = $result && provisionacl_set_acl('g', $group, 'rwx', $dirs, FALSE, array('-R'));
+
+  // crude and ugly hack to remove g+s flags to files that was keeping
+  // file truncates from working.
+  $safe_dirs = join(' ', array_map('escapeshellarg', $dirs));
+  system("chmod -R g-s " . $safe_dirs);
+
   return $result;
 }
 
