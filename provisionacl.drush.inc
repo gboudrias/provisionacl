@@ -106,27 +106,41 @@ function _provisionacl_clientdir_acls($group = null) {
  * 
  * @see provisionacl_set_acl()
  */
-function provisionacl_dirs_acls($dirs, $flags = array('-R', '-P'), $group = null) {
-  if (is_null($group)) {
-    $group = d()->client_name;
+function provisionacl_dirs_acls($dirs, $options = array('recurse' => true, 'follow' => 'false')) {
+  if (is_null($options['group'])) {
+    $options['group'] = d()->client_name;
   }
-  if (!provision_posix_groupname($group)) {
-    drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
+  $flags = array();
+  if ($options['recurse']) {
+    $flags[] = '-R';
+  }
+  if (!$options['follow']) {
+    $flags[] = '-P';
+  }
+  if (!provision_posix_groupname($options['group'])) {
+    drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $options['group'])), 'warning');
     return FALSE;
   }
-  drush_log(dt('setting group ACL read/write access to @group on @dirs', array('@group' => $group, '@dirs' => join(',', $dirs))));
+  drush_log(dt('setting group ACL read/write access to @group on @dirs', array('@group' => $options['group'], '@dirs' => join(',', $dirs))));
   // a default ACL for the aegir user
   $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE, $flags);
   $result = $result && provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs, FALSE, $flags);
   // a default ACL for the client group
-  $result = $result && provisionacl_set_acl('d:g', $group, 'rwx', $dirs, FALSE, $flags);
+  $result = $result && provisionacl_set_acl('d:g', $options['group'], 'rwx', $dirs, FALSE, $flags);
   // a regular ACL for the client group
-  $result = $result && provisionacl_set_acl('g', $group, 'rwx', $dirs, FALSE, $flags);
+  $result = $result && provisionacl_set_acl('g', $options['group'], 'rwx', $dirs, FALSE, $flags);
 
   // crude and ugly hack to remove g+s flags to files that was keeping
   // file truncates from working. fixes bug 1195598
   $safe_dirs = join(' ', array_map('escapeshellarg', $dirs));
-  system("chmod " . join("", $flags) . " g-s " . $safe_dirs);
+  // reset the flags for chmod since they are not the same as setfacl
+  $flags = '';
+  if ($options['recurse']) {
+    $flags = '-R';
+  }
+  // should be safe on symlinks, even though they will be followed,
+  // removing +s is harmless
+  system("chmod $flags g-s " . $safe_dirs);
 
   if (!$result) {
     drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))));
@@ -141,28 +155,32 @@ function provisionacl_dirs_acls($dirs, $flags = array('-R', '-P'), $group = null
  * This operates on the current context, which should normally be a
  * site, and will fetch the client_name and file paths from the context.
  *
- * @param $group string the group to set the acl to
- * @param $context string the context name of this site. Results are
- * undefined if a non-site context is passed.
+ * @param $options array set of options, currently only checking the
+ * 'group' to set the files to.
  * 
  * @return bool if the ACL was set properly
  *
  * @see d()
  * @see provision_set_acl()
  */
-function provisionacl_files_acls($files, $group = null) {
-  if (is_null($group)) {
-    $group = d()->client_name;
+function provisionacl_files_acls($files, $options = array('follow' = FALSE)) {
+  if (isset($options['group'])) {
+    $options['group'] = d()->client_name;
   }
-  if (!provision_posix_groupname($group)) {
-    drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
+  $flags = array();
+  if (!$options['follow']) {
+    $flags[] = '-P';
+  }
+  
+  if (!provision_posix_groupname($options['group'])) {
+    drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $options['group'])), 'warning');
     return FALSE;
   }
-  drush_log(dt('setting group ACL group @group read access to files @files', array('@group' => $group, '@files' => join(", ", @files))));
+  drush_log(dt('setting group ACL group @group read access to files @files', array('@group' => $options['group'], '@files' => join(", ", @files))));
   // a default ACL for the aegir user
-  $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE);
+  $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE, $flags);
   // a regular ACL for the client group
-  $result = $result && provisionacl_set_acl('group', $group, 'r--', $files, TRUE);
+  $result = $result && provisionacl_set_acl('group', $options['group'], 'r--', $files, FALSE, $flags);
   if (!$result) {
     drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))));
   }
