@@ -6,8 +6,19 @@
  * ACL support module for the Aegir backend.
  *
  * This file contains common functions. It could be considered a draft
- * ACL API...
+ * ACL API for Aegir core 2.x. See http://drupal.org/node/1097886 for
+ * followup.
  */
+
+/**
+ * Implementation of hook_drush_command().
+ */
+function provisionacl_drush_command() {
+  $items['provisionacl'] = array(
+    'description' => "Hooks into aegir-provision to setup ACL on client sites.\n\nNot intented to be used on the command line.",
+  );
+  return $items;
+}
 
 /**
  * Set an ACL on the given files
