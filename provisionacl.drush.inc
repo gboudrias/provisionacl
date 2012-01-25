@@ -32,6 +32,8 @@ function provisionacl_drush_command() {
  *    the actual permissions to set
  * @param array $files
  *    the files to set the ACL on
+ * @param bool $flush
+ *    if we need to flush (-b) the current ACLs
  * @param string $flags
  *    extra flags to pass to setfacl(1)
  * @return if the setfacl operation succeeded
@@ -108,12 +110,15 @@ function _provisionacl_clientdir_acls($group = null) {
  *
  * @param $dirs string an array of directories to recursively change
  * permissions on
- * @param $flags extra flags to pass to setfacl (defaults to -R -P,
- * recurse). note that they must also be valid for chmod because of
- * bug 1195598.
- * @param $group string the group to give the rights to
+ * @param $options array extra parameters to pass to setfacl
+ * Valid values are:
+ *  * recurse: whether to recurse in subdirectories (-R, default)
+ *  * follow: whether to follow symlinks given on the commandline
+ *    (default not to follow, -P)
+ *  * group: group to change the ownership to (default to the client_name)
  * 
- * @return bool if the ACL was set properly
+ * @return bool if the ACL was set properly. This will also raise a
+ * drush_set_error() on failure.
  * 
  * @see provisionacl_set_acl()
  */
@@ -160,16 +165,17 @@ function provisionacl_dirs_acls($dirs, $options = array('recurse' => true, 'foll
 }
 
 /**
- * Configure the settings.php and drushrc.php files to have group read
- * access to the client.
+ * Configure files to have group read access to the client.
  *
  * This operates on the current context, which should normally be a
  * site, and will fetch the client_name and file paths from the context.
  *
+ * @param $files array list of files to change the owner.
  * @param $options array set of options, currently only checking the
  * 'group' to set the files to.
  * 
- * @return bool if the ACL was set properly
+ * @return bool if the ACL was set properly. This will also raise a
+ * drush_set_error() on failure.
  *
  * @see d()
  * @see provision_set_acl()
