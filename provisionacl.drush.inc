@@ -208,7 +208,7 @@ function provisionacl_drush_exit() {
         $dirs[]= d()->site_path . '/' . $dir;
       }
       provisionacl_dirs_acls($dirs);
-      provisionacl_dirs_acls(d()->site_path, null, array()); // not recursive
+      provisionacl_dirs_acls(array(d()->site_path), null, array()); // not recursive
       $drushrc = new provisionConfig_drushrc_site(d()->name);
       $settings = new provisionConfig_drupal_settings(d()->name);
       provisionacl_files_acls(array($drushrc->filename(), $settings->filename()));
