@@ -164,7 +164,7 @@ function provisionacl_dirs_acls($dirs, $options = array('recurse' => true, 'foll
  * @see provision_set_acl()
  */
 function provisionacl_files_acls($files, $options = array('follow' => FALSE)) {
-  if (isset($options['group'])) {
+  if (!isset($options['group'])) {
     $options['group'] = d()->client_name;
   }
   $flags = array();
