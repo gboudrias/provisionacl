@@ -95,15 +95,18 @@ function _provisionacl_clientdir_acls($group = null) {
  * 3. a regular ACL for the client group - to make sure it has access
  * to the directory itself
  *
- * @param $group string the group to give the rights to
  * @param $dirs string an array of directories to recursively change
  * permissions on
+ * @param $flags extra flags to pass to setfacl (defaults to -R,
+ * recurse). note that they must also be valid for chmod because of
+ * bug 1195598.
+ * @param $group string the group to give the rights to
  * 
  * @return bool if the ACL was set properly
  * 
  * @see provisionacl_set_acl()
  */
-function provisionacl_dirs_acls($dirs, $group = null) {
+function provisionacl_dirs_acls($dirs, $flags = array('-R'), $group = null) {
   if (is_null($group)) {
     $group = d()->client_name;
   }
@@ -113,17 +116,17 @@ function provisionacl_dirs_acls($dirs, $group = null) {
   }
   drush_log(dt('setting group ACL read/write access to @group on @dirs', array('@group' => $group, '@dirs' => join(',', $dirs))));
   // a default ACL for the aegir user
-  $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE, array('-R'));
-  $result = $result && provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs, FALSE, array('-R'));
+  $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE, $flags);
+  $result = $result && provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs, FALSE, $flags);
   // a default ACL for the client group
-  $result = $result && provisionacl_set_acl('d:g', $group, 'rwx', $dirs, FALSE, array('-R'));
+  $result = $result && provisionacl_set_acl('d:g', $group, 'rwx', $dirs, FALSE, $flags);
   // a regular ACL for the client group
-  $result = $result && provisionacl_set_acl('g', $group, 'rwx', $dirs, FALSE, array('-R'));
+  $result = $result && provisionacl_set_acl('g', $group, 'rwx', $dirs, FALSE, $flags);
 
   // crude and ugly hack to remove g+s flags to files that was keeping
-  // file truncates from working.
+  // file truncates from working. fixes bug 1195598
   $safe_dirs = join(' ', array_map('escapeshellarg', $dirs));
-  system("chmod -R g-s " . $safe_dirs);
+  system("chmod " . join("", $flags) . " g-s " . $safe_dirs);
 
   if (!$result) {
     drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))));
