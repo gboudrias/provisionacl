@@ -75,6 +75,8 @@ function provisionacl_site_acls() {
  * be accessible by user, we also give our group read/execute access
  * to that directory so they can see their sites.
  *
+ * This function is not designed to be called by external modules.
+ *
  * @arg $group string
  *   the group name, also assumed to be the path to the subdirectory
  *   in the clients directory
@@ -82,10 +84,19 @@ function provisionacl_site_acls() {
  * @return bool if the ACL was sucessful, or TRUE if the clients
  *   directory doesn't exist (for backward compatibility)
  */
-function provisionacl_clientdir_acls($group) {
+function _provisionacl_clientdir_acls($group = null) {
+  if (is_null($group)) {
+    $group = d()->client_name;
+  }
+  if (!provision_posix_groupname($group)) {
+    drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
+    return FALSE;
+  }
   $sites_dir = d()->server->clients_path . '/' . $group;
   if (file_exists($sites_dir)) {
-    return provisionacl_set_acl('group', $group, 'r-x', array($sites_dir), TRUE);
+    if (!provisionacl_set_acl('group', $group, 'r-x', array($sites_dir), TRUE)) {
+      return drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))));
+    }
   } else {
     drush_log(dt('not setting ACLs on non-existent client directory @path', array('@path' => $sites_dir)), 'warning');
     return TRUE;
@@ -117,7 +128,14 @@ function provisionacl_clientdir_acls($group) {
  * 
  * @see provisionacl_set_acl()
  */
-function provisionacl_directories_acls($group, $dirs) {
+function provisionacl_dirs_acls($dirs, $group = null) {
+  if (is_null($group)) {
+    $group = d()->client_name;
+  }
+  if (!provision_posix_groupname($group)) {
+    drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
+    return FALSE;
+  }
   drush_log(dt('setting group ACL read/write access to @group on @dirs', array('@group' => $group, '@dirs' => join(',', $dirs))));
   // a default ACL for the aegir user
   $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE, array('-R'));
@@ -132,6 +150,9 @@ function provisionacl_directories_acls($group, $dirs) {
   $safe_dirs = join(' ', array_map('escapeshellarg', $dirs));
   system("chmod -R g-s " . $safe_dirs);
 
+  if (!$result) {
+    drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))));
+  }
   return $result;
 }
 
@@ -151,11 +172,19 @@ function provisionacl_directories_acls($group, $dirs) {
  * @see d()
  * @see provision_set_acl()
  */
-function provisionacl_settings_acls($group, $context) {
-  drush_log(dt('setting group ACL read access to @group on drushrc.php and settings.php files', array('@group' => $group)));
-  $drushrc = new provisionConfig_drushrc_site($context);
-  $settings = new provisionConfig_drupal_settings($context);
-  return provisionacl_set_acl('group', $group, 'r--', array($drushrc->filename(), $settings->filename()), TRUE);
+function provisionacl_files_acls($files, $group = null) {
+  if (is_null($group)) {
+    $group = d()->client_name;
+  }
+  if (!provision_posix_groupname($group)) {
+    drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
+    return FALSE;
+  }
+  drush_log(dt('setting group ACL group @group read access to files @files', array('@group' => $group, '@files' => join(", ", @files))));
+  if (!provisionacl_set_acl('group', $group, 'r--', $files), TRUE)) {
+    return drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))));
+  }
+  return TRUE;
 }
 
 /**
@@ -171,7 +200,15 @@ function provisionacl_drush_exit() {
 
   if (preg_match("/^provision-(verify|install)$/", $command[0])) {
     if (d()->context_type == 'site') {
-      provisionacl_site_acls();
+      $dirs = array();
+      foreach (array('modules', 'themes', 'libraries', 'files', 'private') as &$dir) {
+        $dirs[]= d()->site_path . '/' . $dir;
+      }
+      provisionacl_dirs_acls($dirs);
+      $drushrc = new provisionConfig_drushrc_site(d()->name);
+      $settings = new provisionConfig_drupal_settings(d()->name);
+      provisionacl_files_acls(array($drushrc->filename(), $settings->filename()));
+      _provisionacl_clientdir_acls();
     }
   }
 }
