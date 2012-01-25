@@ -107,7 +107,7 @@ function _provisionacl_clientdir_acls($group = null) {
  * @see provisionacl_set_acl()
  */
 function provisionacl_dirs_acls($dirs, $options = array('recurse' => true, 'follow' => 'false')) {
-  if (is_null($options['group'])) {
+  if (!isset($options['group'])) {
     $options['group'] = d()->client_name;
   }
   $flags = array();
