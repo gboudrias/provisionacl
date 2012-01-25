@@ -97,7 +97,7 @@ function _provisionacl_clientdir_acls($group = null) {
  *
  * @param $dirs string an array of directories to recursively change
  * permissions on
- * @param $flags extra flags to pass to setfacl (defaults to -R,
+ * @param $flags extra flags to pass to setfacl (defaults to -R -P,
  * recurse). note that they must also be valid for chmod because of
  * bug 1195598.
  * @param $group string the group to give the rights to
@@ -106,7 +106,7 @@ function _provisionacl_clientdir_acls($group = null) {
  * 
  * @see provisionacl_set_acl()
  */
-function provisionacl_dirs_acls($dirs, $flags = array('-R'), $group = null) {
+function provisionacl_dirs_acls($dirs, $flags = array('-R', '-P'), $group = null) {
   if (is_null($group)) {
     $group = d()->client_name;
   }
