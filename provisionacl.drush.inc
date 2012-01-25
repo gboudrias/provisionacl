@@ -43,31 +43,6 @@ function provisionacl_set_acl($type, $id, $mode, $files, $flush = FALSE, $flags 
 }
 
 /**
- * Set ACLs for a site
- *
- * This sets ACLs on the settings and drushrc files and changes the
- * directories permissions.
- *
- * This will not set ACLs on non-existent groups
- *
- * @see provision_posix_groupname()
- * @see provisionacl_fix_settings()
- * @see provisionacl_fix_dirs()
- */
-function provisionacl_site_acls() {
-  $group = d()->client_name;
-  $dirs = array('modules', 'themes', 'libraries', 'files', 'private');
-  foreach ($dirs as &$dir) {
-    $dir = d()->site_path . '/' . $dir;
-  }
-  if (!provision_posix_groupname($group)) {
-    drush_log(dt('not setting ACLs for non-existent group @group', array('@group' => $group)), 'warning');
-  } elseif (!(provisionacl_settings_acls($group, d()->name) && provisionacl_directories_acls($group, $dirs) && provisionacl_clientdir_acls($group))) {
-    drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => drush_shell_exec_output())));
-  }
-}
-
-/**
  * Fix ACLs on client directories
  *
  * Starting with 1.0-rc4, Aegir creates symlinks in the "clients_path"
