@@ -163,7 +163,7 @@ function provisionacl_dirs_acls($dirs, $options = array('recurse' => true, 'foll
  * @see d()
  * @see provision_set_acl()
  */
-function provisionacl_files_acls($files, $options = array('follow' = FALSE)) {
+function provisionacl_files_acls($files, $options = array('follow' => FALSE)) {
   if (isset($options['group'])) {
     $options['group'] = d()->client_name;
   }
@@ -203,7 +203,7 @@ function provisionacl_drush_exit() {
   if (preg_match("/^provision-(verify|install)$/", $command[0])) {
     if (d()->context_type == 'site') {
       $dirs = array();
-      foreach (array('modules', 'themes', 'libraries', 'files', 'private') as &$dir) {
+      foreach (array('modules', 'themes', 'libraries', 'files', 'private') as $dir) {
         $dirs[]= d()->site_path . '/' . $dir;
       }
       provisionacl_dirs_acls($dirs);
