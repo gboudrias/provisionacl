@@ -159,10 +159,16 @@ function provisionacl_files_acls($files, $group = null) {
     return FALSE;
   }
   drush_log(dt('setting group ACL group @group read access to files @files', array('@group' => $group, '@files' => join(", ", @files))));
-  if (!provisionacl_set_acl('group', $group, 'r--', $files), TRUE)) {
-    return drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))));
+  // a default ACL for the aegir user
+  $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE);
+  // a regular ACL for the client group
+  $result = $result && provisionacl_set_acl('group', $group, 'r--', $files, TRUE);
+  if (!$result) {
+    drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))));
   }
-  return TRUE;
+  // see 1195598
+  system("chmod g-s " . escapeshellarg($files));
+  return $result;
 }
 
 /**
