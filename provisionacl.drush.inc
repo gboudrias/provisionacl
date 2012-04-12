@@ -220,12 +220,13 @@ function provisionacl_drush_exit() {
 
   if (preg_match("/^provision-(verify|install)$/", $command[0])) {
     if (d()->context_type == 'site') {
-      $dirs = array();
-      foreach (array('modules', 'themes', 'libraries', 'files', 'private') as $dir) {
-        $dirs[]= d()->site_path . '/' . $dir;
-      }
-      provisionacl_dirs_acls($dirs);
-      provisionacl_dirs_acls(array(d()->site_path), null, array()); // not recursive
+      provisionacl_dirs_acls(array(d()->site_path)); // recursive
+      // restore the read-only ACLs on those files
+      // XXX: there is a window of time during which those files are writable
+      // there is also the possibility of users to root the
+      // install thru local.settings.php since that one is writable
+      // finally, one could just rewrite settings.php altogether since
+      // he owns the directory
       $drushrc = new provisionConfig_drushrc_site(d()->name);
       $settings = new provisionConfig_drupal_settings(d()->name);
       provisionacl_files_acls(array($drushrc->filename(), $settings->filename()));
