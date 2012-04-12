@@ -159,7 +159,7 @@ function provisionacl_dirs_acls($dirs, $options = array('recurse' => true, 'foll
   system("chmod $flags g-s " . $safe_dirs);
 
   if (!$result) {
-    drush_log(dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))), 'warning');
+    drush_log(dt('could not set ACLs (error: %error)', array('%error' => substr(join("", drush_shell_exec_output()), 0, 256))), 'warning');
 ;
   }
   return $result;
