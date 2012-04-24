@@ -140,11 +140,11 @@ function provisionacl_dirs_acls($dirs, $options = array('recurse' => true, 'foll
   drush_log(dt('setting group ACL read/write access to @group on @dirs', array('@group' => $options['group'], '@dirs' => join(',', $dirs))));
   // a default ACL for the aegir user
   $result = provisionacl_set_acl('u', d()->server->script_user, 'rwx', $dirs, TRUE, $flags);
-  $result = $result && provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs, FALSE, $flags);
+  $result = provisionacl_set_acl('d:u', d()->server->script_user, 'rwx', $dirs, FALSE, $flags) && $result;
   // a default ACL for the client group
-  $result = $result && provisionacl_set_acl('d:g', $options['group'], 'rwx', $dirs, FALSE, $flags);
+  $result = provisionacl_set_acl('d:g', $options['group'], 'rwx', $dirs, FALSE, $flags) && $result;
   // a regular ACL for the client group
-  $result = $result && provisionacl_set_acl('g', $options['group'], 'rwx', $dirs, FALSE, $flags);
+  $result = provisionacl_set_acl('g', $options['group'], 'rwx', $dirs, FALSE, $flags) && $result;
 
   // crude and ugly hack to remove g+s flags to files that was keeping
   // file truncates from working. fixes bug 1195598
