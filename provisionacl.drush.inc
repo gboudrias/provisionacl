@@ -222,6 +222,8 @@ function provisionacl_drush_exit() {
   if (preg_match("/^provision-(verify|install)$/", $command[0])) {
     if (d()->context_type == 'site') {
       provisionacl_dirs_acls(array(d()->site_path)); // recursive
+      provisionacl_set_acl('group', d()->server->web_group, 'rwx', array(d()->site_path . "/files", d()->site_path . "/private"), FALSE, array("-P"));
+      provisionacl_set_acl('default:group', d()->server->web_group, 'rwx', array(d()->site_path . "/files", d()->site_path . "/private"), FALSE, array("-P"));
       // restore the read-only ACLs on those files
       // XXX: there is a window of time during which those files are writable
       // there is also the possibility of users to root the
