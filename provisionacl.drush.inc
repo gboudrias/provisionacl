@@ -230,8 +230,8 @@ function provisionacl_drush_exit() {
       // install thru local.settings.php since that one is writable
       // finally, one could just rewrite settings.php altogether since
       // he owns the directory
-      $drushrc = new provisionConfig_drushrc_site(d()->name);
-      $settings = new provisionConfig_drupal_settings(d()->name);
+      $drushrc = new Provision_Config_drushrc_site(d()->name);
+      $settings = new Provision_Config_drupal_settings(d()->name);
       provisionacl_files_acls(array($drushrc->filename(), $settings->filename()));
       _provisionacl_clientdir_acls();
     }
