@@ -221,21 +221,29 @@ function provisionacl_drush_exit() {
 
   if (preg_match("/^provision-(verify|install)$/", $command[0])) {
     if (d()->context_type == 'site') {
-      provisionacl_dirs_acls(array(d()->site_path)); // recursive
-      provisionacl_set_acl('group', d()->server->web_group, 'rwx', array(d()->site_path . "/files", d()->site_path . "/private"), FALSE, array("-P", '-R'));
-      provisionacl_set_acl('default:group', d()->server->web_group, 'rwx', array(d()->site_path . "/files", d()->site_path . "/private"), FALSE, array("-P", '-R'));
-      // restore the read-only ACLs on those files
-      // XXX: there is a window of time during which those files are writable
-      // there is also the possibility of users to root the
-      // install thru local.settings.php since that one is writable
-      // finally, one could just rewrite settings.php altogether since
-      // he owns the directory
-      $drushrc = new Provision_Config_drushrc_site(d()->name);
-      $settings = new Provision_Config_drupal_settings(d()->name);
-      provisionacl_files_acls(array($drushrc->filename(), $settings->filename()));
-      _provisionacl_clientdir_acls();
+      _provisionacl_set_acls();
     }
   }
+}
+
+/**
+ * Organize the acl's that need to be set.
+ */
+function _provisionacl_set_acls() {
+
+  provisionacl_dirs_acls(array(d()->site_path)); // recursive
+  provisionacl_set_acl('group', d()->server->web_group, 'rwx', array(d()->site_path . "/files", d()->site_path . "/private"), FALSE, array("-P", '-R'));
+  provisionacl_set_acl('default:group', d()->server->web_group, 'rwx', array(d()->site_path . "/files", d()->site_path . "/private"), FALSE, array("-P", '-R'));
+  // restore the read-only ACLs on those files
+  // XXX: there is a window of time during which those files are writable
+  // there is also the possibility of users to root the
+  // install thru local.settings.php since that one is writable
+  // finally, one could just rewrite settings.php altogether since
+  // he owns the directory
+  $drushrc = new Provision_Config_drushrc_site(d()->name);
+  $settings = new Provision_Config_drupal_settings(d()->name);
+  provisionacl_files_acls(array($drushrc->filename(), $settings->filename()));
+  _provisionacl_clientdir_acls();
 }
 
 /**
