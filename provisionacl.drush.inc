@@ -85,6 +85,10 @@ function _provisionacl_clientdir_acls($group = null) {
     if (!provisionacl_set_acl('group', $group, 'r-x', array($sites_dir), TRUE)) {
       return drush_set_error('PROVISION_ACL_FAILED', dt('could not set ACLs (error: %error)', array('%error' => join("", drush_shell_exec_output()))));
     }
+    else {
+      drush_log(dt('setting group ACL read/write access to @group on @dirs', array('@group' => $group, '@dirs' => $sites_dir)));
+    }
+
   } else {
     drush_log(dt('not setting ACLs on non-existent client directory @path', array('@path' => $sites_dir)), 'warning');
     return TRUE;
