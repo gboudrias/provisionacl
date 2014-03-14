@@ -1,0 +1,16 @@
+REQUIREMENTS
+============
+
+Make sure you have the acl utils, the 'acl' package in Debian.
+
+CAVEATS
+=======
+
+Multi server setups have only had limited testing.
+ACL needs to be enabled on all servers.
+
+The --acls option needs to be added to rsync calls. (See https://drupal.org/node/2179151)
+
+Adding this line to one of the drushrc.php config files.
+  $options['global_sync_options']['acls'] = TRUE;
+
