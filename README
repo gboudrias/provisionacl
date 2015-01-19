@@ -3,6 +3,18 @@ REQUIREMENTS
 
 Make sure you have the acl utils, the 'acl' package in Debian.
 
+USAGE
+=====
+
+To make this work the unix username should match the hostmaster username,
+and the client internal name should match a unix group the user is a member of.
+
+Example commands:
+addgroup <client intername name>
+adduser <hostmaster username>
+adduser <hostmaster username> <client intername name>
+
+
 CAVEATS
 =======
 
