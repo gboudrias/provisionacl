@@ -5,9 +5,7 @@
  *
  * ACL support module for the Aegir backend.
  *
- * This file contains common functions. It could be considered a draft
- * ACL API for Aegir core 2.x. See http://drupal.org/node/1097886 for
- * followup.
+ * This file contains common ACL functions.
  */
 
 /**

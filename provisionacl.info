@@ -3,4 +3,4 @@ description = ACL backend support
 package = Provision
 dependencies[] = drush
 
-core = 6.x
+core = 7.x
